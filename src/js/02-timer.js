@@ -3,7 +3,7 @@ import "flatpickr/dist/flatpickr.min.css";
 import Notiflix from 'notiflix';
 
 const datetimePicker = document.getElementById("datetime-picker");
-const startButton = document.querySelector('[data-start]');
+const startButton = document.getElementById("startButton");
 const daysValue = document.querySelector('[data-days]');
 const hoursValue = document.querySelector('[data-hours]');
 const minutesValue = document.querySelector('[data-minutes]');
@@ -11,6 +11,14 @@ const secondsValue = document.querySelector('[data-seconds]');
 
 let countdown;
 let targetDate;
+
+function toggleStartButton() {
+  if (targetDate && targetDate > new Date()) {
+    startButton.disabled = false;
+  } else {
+    startButton.disabled = true;
+  }
+}
 
 datetimePicker.flatpickr({
   enableTime: true,
@@ -22,11 +30,12 @@ datetimePicker.flatpickr({
     
     if (selectedDate <= new Date()) {
       Notiflix.Notify.failure("Please choose a date in the future");
-      startButton.disabled = true;
+      targetDate = null;
     } else {
       targetDate = selectedDate;
-      startButton.disabled = false;
     }
+    
+    toggleStartButton();
   }
 });
 
@@ -36,8 +45,8 @@ function updateTimer() {
 
   if (timeLeft <= 0) {
     clearInterval(countdown);
-    updateTimerDisplay(0);
-    alert("Time is up!");
+    updateTimerDisplay({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+    Notiflix.Notify.success("Time is up!");
   } else {
     const timeValues = convertMs(timeLeft);
     updateTimerDisplay(timeValues);
@@ -56,7 +65,6 @@ function addLeadingZero(value) {
 }
 
 function convertMs(ms) {
-   // Number of milliseconds per unit of time
    const second = 1000;
    const minute = second * 60;
    const hour = minute * 60;
@@ -72,14 +80,15 @@ function convertMs(ms) {
    const seconds = Math.floor((((ms % day) % hour) % minute) / second);
  
    return { days, hours, minutes, seconds };
- }
- 
- console.log(convertMs(2000)); // {days: 0, hours: 0, minutes: 0, seconds: 2}
- console.log(convertMs(140000)); // {days: 0, hours: 0, minutes: 2, seconds: 20}
- console.log(convertMs(24140000)); // {days: 0, hours: 6 minutes: 42, seconds: 20}
+}
 
-startButton.addEventListener('click', function() {
-  countdown = setInterval(updateTimer, 1000);
-  updateTimer();
-  startButton.disabled = true;
+startButton.addEventListener('click', function () {
+  if (targetDate) {
+    countdown = setInterval(updateTimer, 1000);
+    updateTimer();
+    startButton.disabled = true;
+  } else {
+    Notiflix.Notify.failure("Please choose a date first");
+  }
 });
+toggleStartButton();
